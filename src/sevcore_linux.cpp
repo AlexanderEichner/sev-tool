@@ -332,6 +332,117 @@ int SEVDevice::get_id(void *data, void *id_mem, uint32_t id_length)
     return (int)cmd_ret;
 }
 
+// PSP stub commands
+int SEVDevice::psp_smn_read(uint32_t ccd_src, uint32_t ccd_tgt, uint32_t addr, uint32_t size, uint64_t *val)
+{
+    int cmd_ret = SEV_RET_UNSUPPORTED;
+    int ioctl_ret = -1;
+    sev_user_data_psp_stub_smn_rw cmd_buf;
+
+    memset(&cmd_buf,0 , sizeof(cmd_buf));
+    cmd_buf.ccd_id     = ccd_src;
+    cmd_buf.ccd_id_tgt = ccd_tgt;
+    cmd_buf.smn_addr   = addr;
+    cmd_buf.size       = size;
+    cmd_buf.value      = 0;
+
+    printf("psp_smn_read: Calling SEV_PSP_STUB_SMN_READ ioctl\n");
+    ioctl_ret = sev_ioctl(SEV_PSP_STUB_SMN_READ, &cmd_buf, &cmd_ret);
+    if (ioctl_ret == 0)
+        *val = cmd_buf.value;
+
+    return cmd_ret;
+}
+
+int SEVDevice::psp_smn_write(uint32_t ccd_src, uint32_t ccd_tgt, uint32_t addr, uint32_t size, uint64_t val)
+{
+    int cmd_ret = SEV_RET_UNSUPPORTED;
+    sev_user_data_psp_stub_smn_rw cmd_buf;
+
+    memset(&cmd_buf,0 , sizeof(cmd_buf));
+    cmd_buf.ccd_id     = ccd_src;
+    cmd_buf.ccd_id_tgt = ccd_tgt;
+    cmd_buf.smn_addr   = addr;
+    cmd_buf.size       = size;
+    cmd_buf.value      = val;
+
+    printf("psp_smn_write: Calling SEV_PSP_STUB_SMN_WRITE ioctl\n");
+    sev_ioctl(SEV_PSP_STUB_SMN_WRITE, &cmd_buf, &cmd_ret);
+
+    return cmd_ret;
+}
+
+int SEVDevice::psp_mem_rw(uint32_t ccd_id, uint32_t psp_addr, void* Mem, uint32_t size, bool write)
+{
+    int cmd_ret = SEV_RET_UNSUPPORTED;
+    sev_user_data_psp_stub_psp_rw cmd_buf;
+
+    memset(&cmd_buf,0 , sizeof(cmd_buf));
+    cmd_buf.ccd_id   = ccd_id;
+    cmd_buf.psp_addr = psp_addr;
+    cmd_buf.buf      = (__u64)Mem;
+    cmd_buf.size     = size;
+
+    printf("psp_mem_rw: Calling %s ioctl\n", write ? "SEV_PSP_STUB_PSP_WRITE" : "SEV_PSP_STUB_PSP_READ");
+    sev_ioctl(write ? SEV_PSP_STUB_PSP_WRITE : SEV_PSP_STUB_PSP_READ, &cmd_buf, &cmd_ret);
+
+    return cmd_ret;
+}
+
+int SEVDevice::psp_svc(uint32_t ccd_id, uint32_t syscall, uint32_t r0, uint32_t r1, uint32_t r2, uint32_t r3, uint32_t *r0_return)
+{
+    int cmd_ret = SEV_RET_UNSUPPORTED;
+    sev_user_data_psp_stub_svc_call cmd_buf;
+
+    memset(&cmd_buf,0 , sizeof(cmd_buf));
+    cmd_buf.ccd_id   = ccd_id;
+    cmd_buf.syscall  = syscall;
+    cmd_buf.r0       = r0;
+    cmd_buf.r1       = r1;
+    cmd_buf.r2       = r2;
+    cmd_buf.r3       = r3;
+
+    printf("psp_svc: Calling SEV_PSP_STUB_CALL_SVC ioctl\n");
+    sev_ioctl(SEV_PSP_STUB_CALL_SVC, &cmd_buf, &cmd_ret);
+    *r0_return = cmd_buf.r0_return;
+
+    return cmd_ret;
+}
+
+int SEVDevice::x86_smn_read(uint16_t node, uint32_t addr, uint32_t *u32)
+{
+    int cmd_ret = SEV_RET_UNSUPPORTED;
+    int ioctl_ret = -1;
+    sev_user_data_x86_smn_rw cmd_buf;
+
+    memset(&cmd_buf,0 , sizeof(cmd_buf));
+    cmd_buf.node   = node;
+    cmd_buf.addr   = addr;
+    cmd_buf.value  = 0;
+
+    printf("x86_smn_read: Calling SEV_X86_SMN_READ ioctl\n");
+    ioctl_ret = sev_ioctl(SEV_X86_SMN_READ, &cmd_buf, &cmd_ret);
+    if (ioctl_ret == 0)
+        *u32 = cmd_buf.value;
+
+    return cmd_ret;
+}
+
+int SEVDevice::x86_smn_write(uint16_t node, uint32_t addr, uint32_t u32)
+{
+    int cmd_ret = SEV_RET_UNSUPPORTED;
+    sev_user_data_x86_smn_rw cmd_buf;
+
+    memset(&cmd_buf,0 , sizeof(cmd_buf));
+    cmd_buf.node   = node;
+    cmd_buf.addr   = addr;
+    cmd_buf.value  = u32;
+
+    printf("x86_smn_write: Calling SEV_X86_SMN_WRITE ioctl\n");
+    sev_ioctl(SEV_X86_SMN_WRITE, &cmd_buf, &cmd_ret);
+    return cmd_ret;
+}
+
 std::string SEVDevice::display_build_info(void)
 {
     SEVDevice sev_device;

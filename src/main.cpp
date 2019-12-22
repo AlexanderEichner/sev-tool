@@ -60,6 +60,49 @@ const char help_array[] =  "The following commands are supported:\n" \
                     "  package_secret\n" \
                     "      Input params:\n" \
                     "          launch_blob.txt file\n" \
+                    "PspStub commands:\n" \
+                    "  psp_smn_read\n" \
+                    "      Input params:\n" \
+                    "          ccd_src  - Source CCD ID\n" \
+                    "          ccd_tgt  - Target CCD ID\n" \
+                    "          smn_addr - SMN address to read\n" \
+                    "          size     - Number of bytes to read (1, 2, 4 or 8)\n" \
+                    "  psp_smn_write\n" \
+                    "      Input params:\n" \
+                    "          ccd_src  - Source CCD ID\n" \
+                    "          ccd_tgt  - Target CCD ID\n" \
+                    "          smn_addr - SMN address to write\n" \
+                    "          size     - Number of bytes to write (1, 2, 4 or 8)\n" \
+                    "          val      - The value to write\n" \
+                    "  psp_mem_read\n" \
+                    "      Input params:\n" \
+                    "          ccd_id   - CCD ID\n" \
+                    "          psp_addr - PSP address to read\n" \
+                    "          size     - Number of bytes to read\n" \
+                    "          file     - where to store the resulting data\n" \
+                    "  psp_mem_write\n" \
+                    "      Input params:\n" \
+                    "          ccd_id   - CCD ID\n" \
+                    "          psp_addr - PSP address to write\n" \
+                    "          size     - Number of bytes to write\n" \
+                    "          file     - Where to read the written data from\n" \
+                    "  psp_svc\n" \
+                    "      Input params:\n" \
+                    "          ccd_id   - CCD ID\n" \
+                    "          syscall  - The syscall to execute\n" \
+                    "          r0       - R0 argument value\n" \
+                    "          r1       - R1 argument value\n" \
+                    "          r2       - R2 argument value\n" \
+                    "          r3       - R3 argument value\n" \
+                    "  x86_smn_read\n" \
+                    "      Input params:\n" \
+                    "          node     - Node ID\n" \
+                    "          smn_addr - SMN address to read\n" \
+                    "  x86_smn_write\n" \
+                    "      Input params:\n" \
+                    "          node     - Node ID\n" \
+                    "          smn_addr - SMN address to write\n" \
+                    "          val      - The value to write\n" \
                     ;
 
 /* Flag set by '--verbose' */
@@ -91,6 +134,15 @@ static struct option long_options[] =
     {"validate_cert_chain",  no_argument,       0, 'u'},
     {"generate_launch_blob", required_argument, 0, 'v'},
     {"package_secret",       no_argument,       0, 'w'},
+
+    /* PspStub commands */
+    {"psp_smn_read",         required_argument, 0, 'S'},
+    {"psp_smn_write",        required_argument, 0, 's'},
+    {"psp_mem_read",         required_argument, 0, 'Q'},
+    {"psp_mem_write",        required_argument, 0, 'q'},
+    {"psp_svc",              required_argument, 0, 'z'},
+    {"x86_smn_read",         required_argument, 0, 'X'},
+    {"x86_smn_write",        required_argument, 0, 'x'},
 
     /* Run tests */
     {"test_all",             no_argument,       0, 'T'},
@@ -277,6 +329,81 @@ int main(int argc, char **argv)
                 // Verbose/brief
                 break;
             }
+
+            // PspStub commands
+            case 'S': {
+                optind--;
+                uint32_t ccd_src = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t ccd_tgt = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t smn_addr = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t size = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                Command cmd(output_folder, verbose_flag);
+                cmd_ret = cmd.psp_smn_read(ccd_src, ccd_tgt, smn_addr, size);
+                break;
+            }
+            case 's': {
+                optind--;
+                uint32_t ccd_src = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t ccd_tgt = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t smn_addr = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t size = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint64_t val = (uint64_t)strtoull(argv[optind++], NULL, 16);
+                Command cmd(output_folder, verbose_flag);
+                cmd_ret = cmd.psp_smn_write(ccd_src, ccd_tgt, smn_addr, size, val);
+                break;
+            }
+            case 'Q': {
+                optind--;
+                uint32_t ccd = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t psp_addr = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t size = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                std::string file = argv[optind++];
+
+                Command cmd(output_folder, verbose_flag);
+                cmd_ret = cmd.psp_mem_read(ccd, psp_addr, size, file);
+                break;
+            }
+            case 'q': {
+                optind--;
+                uint32_t ccd = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t psp_addr = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t size = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                std::string file = argv[optind++];
+
+                Command cmd(output_folder, verbose_flag);
+                cmd_ret = cmd.psp_mem_write(ccd, psp_addr, size, file);
+                break;
+            }
+            case 'z': {
+                optind--;
+                uint32_t ccd     = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t syscall = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t r0      = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t r1      = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t r2      = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t r3      = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                Command cmd(output_folder, verbose_flag);
+                cmd_ret = cmd.psp_svc(ccd, syscall, r0, r1, r2, r3);
+                break;
+            }
+            case 'X': {
+                optind--;
+                uint32_t node = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t addr = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                Command cmd(output_folder, verbose_flag);
+                cmd_ret = cmd.x86_smn_read((uint16_t)node, addr);
+                break;
+            }
+            case 'x': {
+                optind--;
+                uint32_t node = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t addr = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                uint32_t val = (uint32_t)strtoul(argv[optind++], NULL, 16);
+                Command cmd(output_folder, verbose_flag);
+                cmd_ret = cmd.x86_smn_write((uint16_t)node, addr, val);
+                break;
+            }
+
             default: {
                 fprintf(stderr, "Unrecognised option: -%c\n", optopt);
                 return false;

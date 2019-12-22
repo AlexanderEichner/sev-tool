@@ -122,6 +122,15 @@ public:
     int pek_cert_import(std::string oca_priv_key_file);
     int get_id(void);
 
+    // PSP stub commands.
+    int psp_smn_read(uint32_t ccd_src, uint32_t ccd_tgt, uint32_t addr, uint32_t size);
+    int psp_smn_write(uint32_t ccd_src, uint32_t ccd_tgt, uint32_t addr, uint32_t size, uint64_t val);
+    int psp_mem_read(uint32_t ccd_src, uint32_t psp_addr, uint32_t len, std::string& file);
+    int psp_mem_write(uint32_t ccd_src, uint32_t psp_addr, uint32_t len, std::string& file);
+    int psp_svc(uint32_t ccd, uint32_t syscall, uint32_t r0, uint32_t r1, uint32_t r2, uint32_t r3);
+    int x86_smn_read(uint16_t node, uint32_t addr);
+    int x86_smn_write(uint16_t node, uint32_t addr, uint32_t u32Val);
+
     // Non-ioctl (custom) commands
     int sys_info(void);
     int get_platform_owner(void);

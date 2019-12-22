@@ -161,6 +161,14 @@ public:
                         const std::string oca_priv_key_file);
     int get_id(void *data, void *id_mem, uint32_t id_length = 0);
 
+    // PSP stub commands
+    int psp_smn_read(uint32_t ccd_src, uint32_t ccd_tgt, uint32_t addr, uint32_t size, uint64_t *val);
+    int psp_smn_write(uint32_t ccd_src, uint32_t ccd_tgt, uint32_t addr, uint32_t size, uint64_t val);
+    int psp_mem_rw(uint32_t ccd_id, uint32_t psp_addr, void* Mem, uint32_t size, bool write);
+    int psp_svc(uint32_t ccd_id, uint32_t syscall, uint32_t r0, uint32_t r1, uint32_t r2, uint32_t r3, uint32_t *r0_return);
+    int x86_smn_read(uint16_t node, uint32_t addr, uint32_t *u32);
+    int x86_smn_write(uint16_t node, uint32_t addr, uint32_t u32);
+
     int sys_info();
     int set_self_owned(void);
     int get_platform_owner(void *data);

@@ -301,6 +301,111 @@ int Command::get_id(void)
 }
 
 // ------------------------------------- //
+// --------- PSP stub commands --------- //
+// ------------------------------------- //
+int Command::psp_smn_read(uint32_t ccd_src, uint32_t ccd_tgt, uint32_t addr, uint32_t size) {
+
+  int cmd_ret = -1;
+  uint64_t u64;
+
+  cmd_ret = m_sev_device->psp_smn_read(ccd_src, ccd_tgt, addr, size, &u64);
+  if (cmd_ret == STATUS_SUCCESS)
+    printf("Read %#x:%#x: %#lx\n", ccd_tgt, addr, u64);
+  else
+    printf("Read %#x:%#x: Error %d\n", ccd_tgt, addr, cmd_ret);
+
+  return cmd_ret;
+}
+
+int Command::psp_smn_write(uint32_t ccd_src, uint32_t ccd_tgt, uint32_t addr, uint32_t size, uint64_t val) {
+
+  int cmd_ret = -1;
+
+  cmd_ret = m_sev_device->psp_smn_write(ccd_src, ccd_tgt, addr, size, val);
+  if (cmd_ret == STATUS_SUCCESS)
+    printf("Written %#x:%#x: %#lx\n", ccd_tgt, addr, val);
+  else
+    printf("Write %#x:%#x: Error %d\n", ccd_tgt, addr, cmd_ret);
+
+  return cmd_ret;
+}
+
+int Command::psp_mem_read(uint32_t ccd_src, uint32_t psp_addr, uint32_t size, std::string& file) {
+
+  int cmd_ret = -1;
+  void *buffer = malloc(size);
+
+  if (!buffer)
+    return cmd_ret;
+
+  memset(buffer,0,size);
+
+  cmd_ret = m_sev_device->psp_mem_rw(ccd_src, psp_addr, buffer, size, false /*write*/);
+  if (cmd_ret == STATUS_SUCCESS)
+      sev::write_file(file, buffer, size);
+  free(buffer);
+
+  return cmd_ret;
+}
+
+int Command::psp_mem_write(uint32_t ccd_src, uint32_t psp_addr, uint32_t size, std::string& file) {
+
+  int cmd_ret = -1;
+  void *buffer = malloc(size);
+
+  if (!buffer)
+    return cmd_ret;
+
+  memset(buffer,0,size);
+  if (sev::read_file(file, buffer, size) != size)
+    return cmd_ret;
+
+  cmd_ret = m_sev_device->psp_mem_rw(ccd_src, psp_addr, buffer, size, true /*write*/);
+  free(buffer);
+  return cmd_ret;
+}
+
+int Command::psp_svc(uint32_t ccd, uint32_t syscall, uint32_t r0, uint32_t r1, uint32_t r2, uint32_t r3) {
+
+  int cmd_ret = -1;
+  uint32_t r0_return;
+
+  cmd_ret = m_sev_device->psp_svc(ccd, syscall, r0, r1, r2, r3, &r0_return);
+  if (cmd_ret == STATUS_SUCCESS)
+    printf("Syscall %#x:%#x (%#x, %#x, %#x, %#x): %#x\n", ccd, syscall, r0, r1, r2, r3, r0_return);
+
+  return cmd_ret;
+
+}
+
+int Command::x86_smn_read(uint16_t node, uint32_t addr) {
+
+  int cmd_ret = -1;
+  uint32_t u32;
+
+  cmd_ret = m_sev_device->x86_smn_read(node, addr, &u32);
+  if (cmd_ret == STATUS_SUCCESS)
+    printf("Read %#x:%#x: %#x\n", node, addr, u32);
+  else
+    printf("Read %#x:%#x: Error %d\n", node, addr, cmd_ret);
+
+  return cmd_ret;
+}
+
+int Command::x86_smn_write(uint16_t node, uint32_t addr, uint32_t val) {
+
+  int cmd_ret = -1;
+
+  cmd_ret = m_sev_device->x86_smn_write(node, addr, val);
+  if (cmd_ret == STATUS_SUCCESS)
+    printf("Written %#x:%#x: %#x\n", node, addr, val);
+  else
+    printf("Write %#x:%#x: Error %d\n", node, addr, val);
+
+  return cmd_ret;
+}
+
+// ------------------------------------- //
 // ---- Non-ioctl (Custom) commands ---- //
 // ------------------------------------- //
 int Command::sys_info(void)
